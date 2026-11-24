@@ -1,39 +1,33 @@
 name: Pipeline CI/CD - TramaSul (Docker)
 
-
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-
 jobs:
   ci:
     name: CI - Build e Teste da Imagem Docker
     runs-on: ubuntu-latest
     steps:
-name: Checkout do repositório
+      - name: Checkout do repositório
         uses: actions/checkout@v4
 
-
-name: Verificar arquivos do projeto
+      - name: Verificar arquivos do projeto
         run: |
           test -f index.html
           test -f Dockerfile
 
-
-name: Construir imagem Docker (docker build)
+      - name: Construir imagem Docker (docker build)
         run: docker build -t tramasul-web:ci .
 
-
-name: Testar container em execução
+      - name: Testar container em execução
         run: |
           docker run -d --name tramasul-test -p 8080:80 tramasul-web:ci
           sleep 2
           curl -f http://localhost:8080 | grep -q "TramaSul"
           docker rm -f tramasul-test
-
 
   cd:
     name: CD - Deploy do Container na EC2
@@ -41,21 +35,19 @@ name: Testar container em execução
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-name: Checkout do repositório
+      - name: Checkout do repositório
         uses: actions/checkout@v4
 
-
-name: Configurar chave SSH
+      - name: Configurar chave SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
           chmod 600 ~/.ssh/ec2_key.pem
 
-
-name: Enviar Dockerfile e subir container na EC2
+      - name: Enviar Dockerfile e subir container na EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/tramasul-app"
-          scp -o StrictHostKeyChecking=no -i /.ssh/ec2_key.pem Dockerfile index.html ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tramasul-app/
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem Dockerfile index.html ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/tramasul-app/
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             cd ~/tramasul-app &&
             sudo systemctl stop nginx 2>/dev/null || true &&
