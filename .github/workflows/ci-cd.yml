@@ -13,17 +13,15 @@ jobs:
     name: CI - Validação do Código
     runs-on: ubuntu-latest
     steps:
-name: Checkout do repositório
+      - name: Checkout do repositório
         uses: actions/checkout@v4
 
-
-name: Verificar existência do index.html
+      - name: Verificar existência do index.html
         run: |
           test -f index.html
           echo "Arquivo index.html encontrado com sucesso."
 
-
-name: Validar estrutura HTML e rótulo da instância
+      - name: Validar estrutura HTML e rótulo da instância
         run: |
           grep -q "<!DOCTYPE html>" index.html
           grep -q "INSTANCE_LABEL" index.html
